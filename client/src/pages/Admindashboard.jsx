@@ -9,8 +9,8 @@ const SORT_OPTIONS = [
 ];
 
 const AdminDashboard = () => {
-  const [allIssues, setAllIssues] = useState([]); // original data
-  const [issues, setIssues] = useState([]); // filtered data
+  const [allIssues, setAllIssues] = useState([]);
+  const [issues, setIssues] = useState([]);
   const [staffList, setStaffList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
@@ -29,45 +29,60 @@ const AdminDashboard = () => {
   const name = localStorage.getItem("loggedInUser");
   const email = localStorage.getItem("userEmail");
 
+  // ✅ Fetch Issues + Staff
   useEffect(() => {
     fetchData();
+    fetchStaff();
     // eslint-disable-next-line
   }, []);
 
   const fetchData = async () => {
-    setLoading(true);
-    const res = await fetch("http://localhost:8080/api/issues", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    setAllIssues(data);
-    setIssues(data);
-    setLoading(false);
+    try {
+      setLoading(true);
+      const res = await fetch("http://localhost:8080/api/issues", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setAllIssues(data);
+      setIssues(data);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching issues:", err);
+      setLoading(false);
+    }
   };
 
+  const fetchStaff = async () => {
+    try {
+      const res = await fetch("http://localhost:8080/api/staff", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setStaffList(data);
+    } catch (err) {
+      console.error("Error fetching staff:", err);
+    }
+  };
+
+  // ✅ Apply frontend filters
   useEffect(() => {
     applyFrontendFilters();
-    // eslint-disable-next-line
   }, [filters, allIssues]);
 
   const applyFrontendFilters = () => {
     let filtered = [...allIssues];
 
-    // status
     if (filters.status)
       filtered = filtered.filter((i) => i.status === filters.status);
 
-    // category
     if (filters.category)
       filtered = filtered.filter((i) => i.category === filters.category);
 
-    // search by title
     if (filters.search)
       filtered = filtered.filter((i) =>
         i.title.toLowerCase().includes(filters.search.toLowerCase())
       );
 
-    // sort
     filtered.sort((a, b) =>
       filters.sort === "latest"
         ? new Date(b.createdAt) - new Date(a.createdAt)
@@ -88,6 +103,7 @@ const AdminDashboard = () => {
     window.location.reload();
   };
 
+  // ✅ Edit logic
   const startEdit = (issue) => {
     setEditing(issue._id);
     setResolutionNotes(issue.resolutionNotes || "");
@@ -102,29 +118,54 @@ const AdminDashboard = () => {
     setAssignedTo("");
   };
 
+  // ✅ Save changes to backend
   const saveChanges = async (id) => {
-    const res = await fetch(`http://localhost:8080/api/issues/${id}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ status, resolutionNotes, assignedTo }),
-    });
-    if (res.ok) {
-      fetchData();
+    try {
+      const res = await fetch(`http://localhost:8080/api/admin/issues/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          status,
+          resolutionNotes,
+          assignedTo: assignedTo || null,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update issue");
+
+      const updatedIssue = await res.json();
+      setAllIssues((prev) =>
+        prev.map((i) => (i._id === id ? updatedIssue : i))
+      );
       cancelEdit();
-    } else alert("Update failed");
+      alert("✅ Issue updated successfully!");
+    } catch (err) {
+      console.error("Update error:", err);
+      alert("❌ Update failed! Check console for details.");
+    }
   };
 
+  // ✅ Delete issue
   const deleteIssue = async (id) => {
     if (!window.confirm("Are you sure you want to delete this issue?")) return;
-    const res = await fetch(`http://localhost:8080/api/issues/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) setAllIssues(allIssues.filter((i) => i._id !== id));
-    else alert("Delete failed");
+
+    try {
+      const res = await fetch(`http://localhost:8080/api/admin/issues/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error("Delete failed");
+
+      setAllIssues((prev) => prev.filter((i) => i._id !== id));
+      alert("🗑️ Issue deleted successfully!");
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("❌ Delete failed! Check console for details.");
+    }
   };
 
   if (loading)
@@ -139,7 +180,9 @@ const AdminDashboard = () => {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
-          <p className="text-gray-600 mt-1">Welcome, {name || "-"} ({email})</p>
+          <p className="text-gray-600 mt-1">
+            Welcome, {name || "-"} ({email})
+          </p>
         </div>
         <button
           onClick={handleLogout}
