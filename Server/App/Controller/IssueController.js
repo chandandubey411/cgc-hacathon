@@ -29,3 +29,22 @@ exports.createIssue = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
+
+exports.getIssues = async (req, res) => {
+  try {
+    const issues = await Issue.find().populate('createdBy', 'name email');
+    res.json(issues);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+exports.getUserIssues = async (req, res) => {
+  try {
+    const issues = await Issue.find({ createdBy: req.user.userId });
+    res.json(issues);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
