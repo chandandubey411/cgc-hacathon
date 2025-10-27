@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import SnailLoader from '../components/Loader'
 
 const UserDashboard = () => {
   const [issues, setIssues] = useState([]);
@@ -9,7 +10,7 @@ const UserDashboard = () => {
   const user = localStorage.getItem('loggedInUser');
 
   useEffect(() => {
-    // Fetch all issues (replace URL if needed)
+    
     fetch("http://localhost:8080/api/issues")
       .then((res) => res.json())
       .then((data) => {
@@ -18,7 +19,9 @@ const UserDashboard = () => {
       });
   }, []);
 
-  if (loading) return <div>Loading issues...</div>;
+  if (loading) return (
+    <SnailLoader/>
+  );
 
   return (
     <div className="mt-6 grid grid-cols-1 gap-8">
