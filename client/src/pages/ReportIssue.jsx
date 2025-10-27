@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  useMapEvents,
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
@@ -49,7 +54,6 @@ const ReportIssue = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const navigate = useNavigate();
-
   const token = localStorage.getItem("token");
 
   const handleSearch = async (e) => {
@@ -67,7 +71,7 @@ const ReportIssue = () => {
       );
       const data = await res.json();
       setSearchResults(data);
-    } catch (err) {
+    } catch {
       setSearchResults([]);
     }
     setSearching(false);
@@ -87,16 +91,11 @@ const ReportIssue = () => {
     let errs = {};
     if (!form.title) errs.title = "Title is required";
     if (!form.description) errs.description = "Description is required";
-    if (!form.category) errs.category = "Category is required";
     if (!form.image) errs.image = "Please upload an image";
-    if (!form.latitude || !form.longitude)
-      errs.location = "Location is required";
     return errs;
   };
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -119,14 +118,8 @@ const ReportIssue = () => {
           });
           handleSuccess("Location fetched!");
         },
-        (err) => {
-          handleError(
-            "Unable to fetch location. Please allow location access in your browser."
-          );
-        }
+        () => handleError("Unable to fetch location.")
       );
-    } else {
-      handleError("Geolocation is not supported by your browser.");
     }
   };
 
@@ -135,172 +128,123 @@ const ReportIssue = () => {
     const errs = validate();
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
+
     setSubmitting(true);
-
     const data = new FormData();
-    data.append("title", form.title);
-    data.append("description", form.description);
-    data.append("category", form.category);
-    data.append("image", form.image);
-    data.append("latitude", form.latitude);
-    data.append("longitude", form.longitude);
-
-    const token = localStorage.getItem("token");
+    for (let key in form) data.append(key, form[key]);
 
     try {
       const res = await fetch("http://localhost:8080/api/issues/", {
         method: "POST",
         body: data,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       const result = await res.json();
-      console.log(result);
       if (res.ok) {
-        handleSuccess("issue reported successfully");
-        setTimeout(() => {
-          navigate("/user/dashboard");
-        }, [1000]);
-        // Optional: Reset form or redirect
-        setForm({
-          title: "",
-          description: "",
-          category: categories[0],
-          image: null,
-          latitude: 28.6448,
-          longitude: 77.216721,
-        });
-      }
-    } catch (err) {
-      handleError(err);
+        handleSuccess("Issue reported successfully!");
+        setTimeout(() => navigate("/user/dashboard"), 1200);
+      } else handleError(result.message || "Something went wrong!");
+    } catch {
+      handleError("Failed to submit issue.");
     }
     setSubmitting(false);
   };
 
   return (
-    <div className="max-w-lg mx-auto p-6 bg-white rounded shadow mt-8 relative">
-      <h2 className="text-2xl font-bold mb-6 text-center">
-        Report Civic Issue
-      </h2>
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-5"
-        encType="multipart/form-data"
-      >
-        <div>
-          <label className="block font-semibold mb-1">Title</label>
-          <input
-            name="title"
-            value={form.title}
-            onChange={handleChange}
-            className={`w-full p-2 border rounded ${
-              errors.title ? "border-red-500" : "border-gray-300"
-            }`}
-          />
-          {errors.title && (
-            <p className="text-red-500 text-sm">{errors.title}</p>
-          )}
+    <div className="min-h-screen flex flex-col md:flex-row items-center justify-center p-8 backdrop-blur-lg bg-transparent">
+      <div className="backdrop-blur-xl bg-white/50 shadow-2xl rounded-3xl flex flex-col md:flex-row w-full max-w-6xl overflow-hidden border border-white/40">
+        
+        {/* Left Form Section */}
+        <div className="flex-1 p-8 space-y-6">
+          <h2 className="text-3xl font-bold text-gray-800 text-center">
+            🧾 Report an Issue
+          </h2>
+
+          <form onSubmit={handleSubmit} className="space-y-4" encType="multipart/form-data">
+            <div>
+              <label className="font-semibold text-gray-700">Title</label>
+              <input
+                name="title"
+                value={form.title}
+                onChange={handleChange}
+                className={`w-full p-3 mt-1 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400 ${
+                  errors.title ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+            </div>
+
+            <div>
+              <label className="font-semibold text-gray-700">Description</label>
+              <textarea
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                rows={3}
+                className={`w-full p-3 mt-1 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400 ${
+                  errors.description ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+            </div>
+
+            <div>
+              <label className="font-semibold text-gray-700">Category</label>
+              <select
+                name="category"
+                value={form.category}
+                onChange={handleChange}
+                className="w-full p-3 mt-1 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-400"
+              >
+                {categories.map((cat) => (
+                  <option key={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="font-semibold text-gray-700">Upload Image</label>
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleImageChange}
+                className="w-full mt-1"
+              />
+              {imagePreview && (
+                <img
+                  src={imagePreview}
+                  alt="preview"
+                  className="mt-3 h-32 w-full object-cover rounded-lg shadow-md"
+                />
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full bg-blue-600 text-white py-3 mt-2 rounded-lg font-semibold hover:bg-blue-700 transition-transform transform hover:scale-105"
+            >
+              {submitting ? "Submitting..." : "Submit Issue"}
+            </button>
+          </form>
         </div>
 
-        <div>
-          <label className="block font-semibold mb-1">Description</label>
-          <textarea
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            rows={3}
-            className={`w-full p-2 border rounded ${
-              errors.description ? "border-red-500" : "border-gray-300"
-            }`}
-          />
-          {errors.description && (
-            <p className="text-red-500 text-sm">{errors.description}</p>
-          )}
-        </div>
+        {/* Right Map Section */}
+        <div className="flex-1 p-8 bg-white/40 border-l border-gray-200 relative">
+          <h2 className="text-3xl font-bold text-gray-800 text-center mb-4">
+            📍 Select Location
+          </h2>
 
-        <div>
-          <label className="block font-semibold mb-1">Category</label>
-          <select
-            name="category"
-            value={form.category}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-          >
-            {categories.map((cat) => (
-              <option key={cat}>{cat}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block font-semibold mb-1">
-            Upload or Capture Image
-          </label>
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={handleImageChange}
-            className="w-full"
-          />
-          {imagePreview && (
-            <img
-              src={imagePreview}
-              alt="preview"
-              className="mt-2 h-32 rounded shadow"
-            />
-          )}
-          {errors.image && (
-            <p className="text-red-500 text-sm">{errors.image}</p>
-          )}
-          <p className="text-gray-500 text-xs">
-            You can select an image or take a photo from your mobile camera.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleDetectLocation}
-          className="mb-2 p-2 bg-green-600 text-white rounded hover:bg-green-700"
-        >
-          Use My Current Location
-        </button>
-
-        <div className="h-64 rounded overflow-hidden">
-          <MapContainer
-            center={[form.latitude, form.longitude]}
-            zoom={13}
-            style={{ height: "100%", width: "100%" }}
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <LocationPicker setLocation={setLocation} />
-            <Marker position={[form.latitude, form.longitude]} />
-          </MapContainer>
-        </div>
-        <p className="mt-1 text-gray-600 text-sm">
-          Tap on the map to choose location.
-        </p>
-
-        <div>
-          <label className="block font-semibold mb-1">Search Location</label>
           <input
             type="text"
-            placeholder="Type and select a location..."
+            placeholder="Search location..."
             value={search}
             onChange={handleSearch}
-            className="w-full p-2 border rounded"
+            className="w-full p-3 border rounded-lg shadow-sm mb-3 focus:ring-2 focus:ring-blue-400"
           />
 
-          {searching && (
-            <div className="text-gray-500 text-sm">Searching...</div>
-          )}
-
+          {searching && <p className="text-gray-500 text-sm">Searching...</p>}
           {searchResults.length > 0 && (
-            <ul className="border rounded bg-white absolute z-20 w-full max-h-48 overflow-y-auto shadow">
+            <ul className="absolute bg-white border rounded-lg shadow-md w-[90%] z-20 max-h-48 overflow-y-auto">
               {searchResults.map((result) => (
                 <li
                   key={result.place_id}
@@ -312,24 +256,31 @@ const ReportIssue = () => {
               ))}
             </ul>
           )}
+
+          <button
+            onClick={handleDetectLocation}
+            className="w-full bg-green-600 text-white py-2 rounded-lg mt-2 hover:bg-green-700 transition"
+          >
+            Use My Current Location
+          </button>
+
+          <div className="h-80 mt-4 rounded-xl overflow-hidden border border-gray-300 shadow-md">
+            <MapContainer
+              center={[form.latitude, form.longitude]}
+              zoom={13}
+              style={{ height: "100%", width: "100%" }}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <LocationPicker setLocation={setLocation} />
+              <Marker position={[form.latitude, form.longitude]} />
+            </MapContainer>
+          </div>
         </div>
+      </div>
 
-        {errors.location && (
-          <p className="text-red-500 text-sm">{errors.location}</p>
-        )}
-
-        {errors.submit && (
-          <p className="text-red-500 text-center">{errors.submit}</p>
-        )}
-
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white p-3 rounded font-semibold hover:bg-blue-700 transition"
-          disabled={submitting}
-        >
-          {token? (submitting ? "Submitting..." : "Report Issue") : navigate('/login')}
-        </button>
-      </form>
       <ToastContainer />
     </div>
   );

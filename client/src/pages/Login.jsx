@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ToastContainer } from "react-toastify";
 import { handleError, handleSuccess } from "../utils";
 import { Link, useNavigate } from "react-router-dom";
+import "react-toastify/dist/ReactToastify.css";
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -27,17 +28,14 @@ const Login = () => {
     const errs = validate();
     setErrors(errs);
     if (Object.keys(errs).length === 0) {
-      try{
+      try {
         const url = "http://localhost:8080/api/auth/login";
         const response = await fetch(url, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(formData),
         });
         const result = await response.json();
-        console.log(result);
         const { message, token, user } = result;
 
         if (token && message && user) {
@@ -47,68 +45,93 @@ const Login = () => {
           localStorage.setItem("userEmail", user.email);
           localStorage.setItem("userRole", user.role);
           setTimeout(() => {
-            {user.role === "admin" ? navigate("/admin/dashboard") : navigate("/report");}
+            user.role === "admin"
+              ? navigate("/admin/dashboard")
+              : navigate("/report");
           }, 1000);
         }
-        // Submit registration data to backend API here
         setFormData({ email: "", password: "" });
-      }catch(err){
-        handleError(err);
+      } catch (err) {
+        handleError("Login failed. Try again!");
       }
     }
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded shadow mt-6">
-      <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
-      <form onSubmit={handleSubmit} noValidate>
-        <div className="mb-4">
-          <label htmlFor="email" className="block mb-1 font-semibold">
-            Email
-          </label>
-          <input
-            type="email"
-            name="email"
-            id="email"
-            className={`w-full p-2 border rounded ${
-              errors.email ? "border-red-500" : "border-gray-300"
-            }`}
-            value={formData.email}
-            onChange={handleChange}
-          />
-          {errors.email && (
-            <p className="text-red-500 mt-1 text-sm">{errors.email}</p>
-          )}
-        </div>
-
-        <div className="mb-6">
-          <label htmlFor="password" className="block mb-1 font-semibold">
-            Password
-          </label>
-          <input
-            type="password"
-            name="password"
-            id="password"
-            className={`w-full p-2 border rounded ${
-              errors.password ? "border-red-500" : "border-gray-300"
-            }`}
-            value={formData.password}
-            onChange={handleChange}
-          />
-          {errors.password && (
-            <p className="text-red-500 mt-1 text-sm">{errors.password}</p>
-          )}
-        </div>
-
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white p-3 mb-3 rounded font-semibold hover:bg-blue-700 transition"
-        >
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
+        <h2 className="text-3xl font-semibold text-gray-800 text-center mb-6">
           Login
-        </button>
-        <p>Don't have any account? <Link to={'/register'} className="text-blue-600">Sign Up</Link></p>
-      </form>
-      <ToastContainer/>
+        </h2>
+
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="mb-4">
+            <label
+              htmlFor="email"
+              className="block mb-1 font-medium text-gray-700"
+            >
+              Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              id="email"
+              className={`w-full p-3 border rounded-lg outline-none text-gray-800 ${
+                errors.email
+                  ? "border-red-500 focus:ring-1 focus:ring-red-400"
+                  : "border-gray-300 focus:ring-1 focus:ring-blue-400"
+              }`}
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter your email"
+            />
+            {errors.email && (
+              <p className="text-red-500 mt-1 text-sm">{errors.email}</p>
+            )}
+          </div>
+
+          <div className="mb-6">
+            <label
+              htmlFor="password"
+              className="block mb-1 font-medium text-gray-700"
+            >
+              Password
+            </label>
+            <input
+              type="password"
+              name="password"
+              id="password"
+              className={`w-full p-3 border rounded-lg outline-none text-gray-800 ${
+                errors.password
+                  ? "border-red-500 focus:ring-1 focus:ring-red-400"
+                  : "border-gray-300 focus:ring-1 focus:ring-blue-400"
+              }`}
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Enter your password"
+            />
+            {errors.password && (
+              <p className="text-red-500 mt-1 text-sm">{errors.password}</p>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+          >
+            Login
+          </button>
+
+          <p className="text-center mt-5 text-gray-600">
+            Don’t have an account?{" "}
+            <Link to="/register" className="text-blue-600 font-medium hover:underline">
+              Sign Up
+            </Link>
+          </p>
+        </form>
+
+        <ToastContainer position="top-right" autoClose={2000} />
+      </div>
     </div>
   );
 };
