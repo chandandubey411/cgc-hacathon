@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ToastContainer } from "react-toastify";
-import { handleError, handleSuccess } from "../Utils";
+import { handleError, handleSuccess } from "../utils";
 import { Link, useNavigate } from "react-router-dom";
 
 const Login = () => {
@@ -45,8 +45,9 @@ const Login = () => {
           localStorage.setItem("token", token);
           localStorage.setItem("loggedInUser", user.name);
           localStorage.setItem("userEmail", user.email);
+          localStorage.setItem("userRole", user.role);
           setTimeout(() => {
-            navigate("/report");
+            {user.role === "admin" ? navigate("/admin/dashboard") : navigate("/report");}
           }, 1000);
         }
         // Submit registration data to backend API here
@@ -58,90 +59,56 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-100 via-white to-sky-50 px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 transition-transform duration-300 hover:scale-[1.01]">
-        <h2 className="text-3xl font-extrabold text-center text-gray-800 mb-8">
-          Welcome Back 👋
-        </h2>
+    <div className="max-w-md mx-auto p-6 bg-white rounded shadow mt-6">
+      <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
+      <form onSubmit={handleSubmit} noValidate>
+        <div className="mb-4">
+          <label htmlFor="email" className="block mb-1 font-semibold">
+            Email
+          </label>
+          <input
+            type="email"
+            name="email"
+            id="email"
+            className={`w-full p-2 border rounded ${
+              errors.email ? "border-red-500" : "border-gray-300"
+            }`}
+            value={formData.email}
+            onChange={handleChange}
+          />
+          {errors.email && (
+            <p className="text-red-500 mt-1 text-sm">{errors.email}</p>
+          )}
+        </div>
 
-        <form onSubmit={handleSubmit} noValidate className="space-y-6">
-          {/* Email Field */}
-          <div>
-            <label
-              htmlFor="email"
-              className="block mb-2 text-sm font-semibold text-gray-700"
-            >
-              Email Address
-            </label>
-            <input
-              type="email"
-              name="email"
-              id="email"
-              className={`w-full p-3 rounded-lg border text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition 
-                ${
-                  errors.email
-                    ? "border-red-500 focus:ring-red-400"
-                    : "border-gray-300"
-                }`}
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="you@example.com"
-            />
-            {errors.email && (
-              <p className="text-red-500 mt-1 text-sm">{errors.email}</p>
-            )}
-          </div>
+        <div className="mb-6">
+          <label htmlFor="password" className="block mb-1 font-semibold">
+            Password
+          </label>
+          <input
+            type="password"
+            name="password"
+            id="password"
+            className={`w-full p-2 border rounded ${
+              errors.password ? "border-red-500" : "border-gray-300"
+            }`}
+            value={formData.password}
+            onChange={handleChange}
+          />
+          {errors.password && (
+            <p className="text-red-500 mt-1 text-sm">{errors.password}</p>
+          )}
+        </div>
 
-          {/* Password Field */}
-          <div>
-            <label
-              htmlFor="password"
-              className="block mb-2 text-sm font-semibold text-gray-700"
-            >
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              id="password"
-              className={`w-full p-3 rounded-lg border text-gray-800 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition 
-                ${
-                  errors.password
-                    ? "border-red-500 focus:ring-red-400"
-                    : "border-gray-300"
-                }`}
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="••••••••"
-            />
-            {errors.password && (
-              <p className="text-red-500 mt-1 text-sm">{errors.password}</p>
-            )}
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className="w-full bg-gradient-to-r from-blue-600 to-sky-500 text-white py-3 rounded-lg font-semibold shadow-md 
-              hover:from-blue-700 hover:to-sky-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1"
-          >
-            Login
-          </button>
-
-          {/* Footer Text */}
-          <p className="text-center text-gray-600 text-sm mt-4">
-            Don’t have an account?{" "}
-            <Link
-              to="/register"
-              className="text-blue-600 font-medium hover:underline"
-            >
-              Sign Up
-            </Link>
-          </p>
-        </form>
-
-        <ToastContainer position="top-right" autoClose={2000} />
-      </div>
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white p-3 mb-3 rounded font-semibold hover:bg-blue-700 transition"
+        >
+          Login
+        </button>
+        <p>Don't have any account? <Link to={'/register'} className="text-blue-600">Sign Up</Link></p>
+      </form>
+      <ToastContainer/>
     </div>
   );
 };
