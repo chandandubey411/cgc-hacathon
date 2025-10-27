@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Camera,
   MapPin,
@@ -7,6 +7,8 @@ import {
   Shield,
   BarChart3,
 } from "lucide-react";
+import AOS from "aos"
+import "aos/dist/aos.css";
 
 const features = [
   {
@@ -54,6 +56,14 @@ const features = [
 ];
 
 const FeaturesSection = () => {
+
+  useEffect(()=>{
+      AOS.init({
+        duration:1500,
+        once:true,
+      })
+    },[])
+
   return (
     <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
       <div className="text-center mb-14 px-6">
@@ -70,6 +80,7 @@ const FeaturesSection = () => {
           <div
             key={index}
             className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 p-6 relative"
+            data-aos="fade-down-right"
           >
             <div
               className={`w-12 h-12 ${feature.color} rounded-xl flex items-center justify-center mb-4`}
