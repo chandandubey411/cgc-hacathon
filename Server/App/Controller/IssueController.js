@@ -78,3 +78,6 @@ exports.deleteIssue = async (req, res) => {
     res.status(500).json({ message: "Error deleting issue", error: err.toString() });
   }
 };
+
+// controller/issueController.js
+
