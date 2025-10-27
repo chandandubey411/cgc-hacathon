@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ToastContainer } from "react-toastify";
-import { handleError, handleSuccess } from "../Utils";
+import { handleError, handleSuccess } from "../utils";
 import { Link, useNavigate } from "react-router-dom";
 
 const Login = () => {
@@ -45,8 +45,9 @@ const Login = () => {
           localStorage.setItem("token", token);
           localStorage.setItem("loggedInUser", user.name);
           localStorage.setItem("userEmail", user.email);
+          localStorage.setItem("userRole", user.role);
           setTimeout(() => {
-            navigate("/report");
+            {user.role === "admin" ? navigate("/admin/dashboard") : navigate("/report");}
           }, 1000);
         }
         // Submit registration data to backend API here
