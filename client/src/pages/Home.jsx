@@ -5,6 +5,7 @@ import Issue from "../components/Issue";
 import ReportMap from "../components/ReportMap";
 import HeroSection from '../components/HeroSection'
 import HowItWorks from '../components/Working'
+import FeaturesSection from '../components/FeaturesSection'
 import "leaflet/dist/leaflet.css";
 
 
@@ -13,6 +14,7 @@ const UserDashboard = () => {
     <div>
       <HeroSection/>
       <HowItWorks/>
+      <FeaturesSection/>
       <Issue />
       <ReportMap />
     </div>
