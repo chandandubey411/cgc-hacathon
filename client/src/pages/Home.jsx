@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import HeroSection from "../components/HeroSection";
 
 const UserDashboard = () => {
   const [issues, setIssues] = useState([]);
@@ -20,7 +21,13 @@ const UserDashboard = () => {
 
   if (loading) return <div>Loading issues...</div>;
 
+  // const user = { role: "citizen" };
+
   return (
+
+      
+
+
     <div className="mt-6 grid grid-cols-1 gap-8">
       {/* ------ List Section ------ */}
       <div>
