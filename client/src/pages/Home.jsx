@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+<<<<<<< HEAD
 import HeroSection from "../components/HeroSection";
+=======
+import SnailLoader from '../components/Loader'
+>>>>>>> c38661efdf1c616bfe0e867a70d39eb82648030e
 
 const UserDashboard = () => {
   const [issues, setIssues] = useState([]);
@@ -10,7 +14,7 @@ const UserDashboard = () => {
   const user = localStorage.getItem('loggedInUser');
 
   useEffect(() => {
-    // Fetch all issues (replace URL if needed)
+    
     fetch("http://localhost:8080/api/issues")
       .then((res) => res.json())
       .then((data) => {
@@ -19,7 +23,9 @@ const UserDashboard = () => {
       });
   }, []);
 
-  if (loading) return <div>Loading issues...</div>;
+  if (loading) return (
+    <SnailLoader/>
+  );
 
   // const user = { role: "citizen" };
 
