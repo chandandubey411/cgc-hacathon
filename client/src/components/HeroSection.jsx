@@ -5,9 +5,9 @@ const Hero = () => {
   return (
     <section className="bg-gradient-to-b from-gray-50 to-white py-20 px-6 md:px-12 lg:px-24">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-        {/* LEFT SECTION */}
+        
         <div className="space-y-8">
-          {/* Heading */}
+         
           <div className="space-y-4">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight">
               Report Issues,
@@ -24,9 +24,9 @@ const Hero = () => {
             </p>
           </div>
 
-          {/* Buttons */}
+        
           <div className="flex flex-col sm:flex-row gap-4">
-            {/* Report Button */}
+            
             <button
               className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-green-500 text-white px-6 py-3 rounded-md shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300 font-medium"
             >
@@ -35,7 +35,7 @@ const Hero = () => {
               <ArrowRight className="w-5 h-5" />
             </button>
 
-            {/* View Reports Button */}
+           
             <button
               className="flex items-center justify-center gap-2 border border-gray-300 text-gray-800 px-6 py-3 rounded-md shadow-sm hover:bg-gray-100 transition-all duration-300 font-medium"
             >
@@ -44,7 +44,6 @@ const Hero = () => {
             </button>
           </div>
 
-          {/* Stats Section */}
           <div className="grid grid-cols-3 gap-6 pt-8 border-t border-gray-200">
             <div className="text-center">
               <div className="text-2xl font-bold text-sky-500">2,847</div>
@@ -61,7 +60,6 @@ const Hero = () => {
           </div>
         </div>
 
-        {/* RIGHT SECTION */}
         <div className="relative">
           <div className="relative rounded-2xl overflow-hidden shadow-xl">
             <img
@@ -70,7 +68,7 @@ const Hero = () => {
               className="w-full h-[460px] object-cover"
             />
 
-            {/* Top Left Badge */}
+           
             <div className="absolute top-4 left-4 bg-white/80 backdrop-blur-md border border-white/30 rounded-lg px-4 py-2 flex items-center gap-2 shadow-md">
               <div className="w-3 h-3 bg-green-500 rounded-full" />
               <span className="text-sm font-medium text-gray-800">
@@ -78,7 +76,7 @@ const Hero = () => {
               </span>
             </div>
 
-            {/* Bottom Right Badge */}
+          
             <div className="absolute bottom-4 right-4 bg-white/80 backdrop-blur-md border border-white/30 rounded-lg px-4 py-2 flex items-center gap-2 shadow-md">
               <Users className="w-4 h-4 text-gray-700" />
               <span className="text-sm font-medium text-gray-800">
