@@ -2,19 +2,18 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const STATUS_OPTIONS = ["Pending", "In Progress", "Resolved"];
-const CATEGORIES = [
-  "Garbage", "Water Leak", "Road Safety", "Pothole", "Streetlight", "Other"
-];
+const CATEGORIES = ["Garbage", "Water Leak", "Road Safety", "Pothole", "Streetlight", "Other"];
 const SORT_OPTIONS = [
   { label: "Latest first", value: "latest" },
-  { label: "Oldest first", value: "oldest" }
+  { label: "Oldest first", value: "oldest" },
 ];
 
 const AdminDashboard = () => {
-  const [issues, setIssues] = useState([]);
+  const [allIssues, setAllIssues] = useState([]); // original data
+  const [issues, setIssues] = useState([]); // filtered data
   const [staffList, setStaffList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(null); // issue _id being edited
+  const [editing, setEditing] = useState(null);
   const [resolutionNotes, setResolutionNotes] = useState("");
   const [status, setStatus] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
@@ -22,47 +21,69 @@ const AdminDashboard = () => {
     status: "",
     category: "",
     search: "",
-    sort: "latest"
+    sort: "latest",
   });
 
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
-
-  const name = localStorage.getItem("loggedInUser")
-  const email = localStorage.getItem("userEmail")
-
-  useEffect(() => {
-    // Fetch assignable users
-    fetch("http://localhost:8080/api/users?role=admin", {
-      headers: { Authorization: `Bearer ${token}` }
-    }).then(res => res.json()).then(setStaffList);
-  }, [token]);
+  const name = localStorage.getItem("loggedInUser");
+  const email = localStorage.getItem("userEmail");
 
   useEffect(() => {
-    fetchIssues();
+    fetchData();
     // eslint-disable-next-line
-  }, [filters]);
+  }, []);
 
-  const fetchIssues = async () => {
+  const fetchData = async () => {
     setLoading(true);
-    const params = [];
-    if (filters.status) params.push(`status=${filters.status}`);
-    if (filters.category) params.push(`category=${filters.category}`);
-    if (filters.search) params.push(`search=${encodeURIComponent(filters.search)}`);
-    if (filters.sort) params.push(`sort=${filters.sort}`);
-    const query = params.length ? `?${params.join('&')}` : '';
-    const res = await fetch(`http://localhost:8080/api/issues${query}`, {
-      headers: { Authorization: `Bearer ${token}` }
+    const res = await fetch("http://localhost:8080/api/issues", {
+      headers: { Authorization: `Bearer ${token}` },
     });
-    if (res.ok) setIssues(await res.json());
+    const data = await res.json();
+    setAllIssues(data);
+    setIssues(data);
     setLoading(false);
   };
 
+  useEffect(() => {
+    applyFrontendFilters();
+    // eslint-disable-next-line
+  }, [filters, allIssues]);
+
+  const applyFrontendFilters = () => {
+    let filtered = [...allIssues];
+
+    // status
+    if (filters.status)
+      filtered = filtered.filter((i) => i.status === filters.status);
+
+    // category
+    if (filters.category)
+      filtered = filtered.filter((i) => i.category === filters.category);
+
+    // search by title
+    if (filters.search)
+      filtered = filtered.filter((i) =>
+        i.title.toLowerCase().includes(filters.search.toLowerCase())
+      );
+
+    // sort
+    filtered.sort((a, b) =>
+      filters.sort === "latest"
+        ? new Date(b.createdAt) - new Date(a.createdAt)
+        : new Date(a.createdAt) - new Date(b.createdAt)
+    );
+
+    setIssues(filtered);
+  };
+
+  const handleFilter = (e) => {
+    const { name, value } = e.target;
+    setFilters((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("loggedInUser");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("userRole");
+    localStorage.clear();
     navigate("/login");
     window.location.reload();
   };
@@ -81,7 +102,6 @@ const AdminDashboard = () => {
     setAssignedTo("");
   };
 
-  // PATCH request to update status/comments/assignedTo
   const saveChanges = async (id) => {
     const res = await fetch(`http://localhost:8080/api/issues/${id}`, {
       method: "PATCH",
@@ -89,32 +109,22 @@ const AdminDashboard = () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        status,
-        resolutionNotes,
-        assignedTo
-      }),
+      body: JSON.stringify({ status, resolutionNotes, assignedTo }),
     });
     if (res.ok) {
-      fetchIssues();
+      fetchData();
       cancelEdit();
-    } else {
-      alert("Update failed");
-    }
+    } else alert("Update failed");
   };
 
   const deleteIssue = async (id) => {
     if (!window.confirm("Are you sure you want to delete this issue?")) return;
     const res = await fetch(`http://localhost:8080/api/issues/${id}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     });
-    if (res.ok) setIssues(issues.filter((i) => i._id !== id));
+    if (res.ok) setAllIssues(allIssues.filter((i) => i._id !== id));
     else alert("Delete failed");
-  };
-
-  const handleFilter = (e) => {
-    setFilters({ ...filters, [e.target.name]: e.target.value });
   };
 
   if (loading)
@@ -125,83 +135,97 @@ const AdminDashboard = () => {
     );
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-6">Admin Dashboard: All Reported Issues</h2>
-
-      <div className="flex justify-between items-center mb-8">
+    <div className="max-w-6xl mx-auto p-6 mt-10">
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <div className="text-2xl font-bold">Welcome, {name || "-"}</div>
-          <div className="text-gray-700 text-base">Email: {email || "-"}</div>
+          <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+          <p className="text-gray-600 mt-1">Welcome, {name || "-"} ({email})</p>
         </div>
         <button
           onClick={handleLogout}
-          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
         >
           Logout
         </button>
       </div>
 
-      {/* FILTER BAR */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        <select name="status" value={filters.status} onChange={handleFilter} className="border rounded px-2 py-1">
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3 mb-6 bg-white/70 backdrop-blur-md p-4 rounded-xl shadow-sm">
+        <select
+          name="status"
+          value={filters.status}
+          onChange={handleFilter}
+          className="border rounded-lg px-3 py-2 shadow-sm focus:ring focus:ring-blue-300"
+        >
           <option value="">All statuses</option>
-          {STATUS_OPTIONS.map((s) => (<option key={s}>{s}</option>))}
+          {STATUS_OPTIONS.map((s) => (
+            <option key={s}>{s}</option>
+          ))}
         </select>
-        <select name="category" value={filters.category} onChange={handleFilter} className="border rounded px-2 py-1">
+
+        <select
+          name="category"
+          value={filters.category}
+          onChange={handleFilter}
+          className="border rounded-lg px-3 py-2 shadow-sm focus:ring focus:ring-blue-300"
+        >
           <option value="">All categories</option>
-          {CATEGORIES.map((c) => (<option key={c}>{c}</option>))}
+          {CATEGORIES.map((c) => (
+            <option key={c}>{c}</option>
+          ))}
         </select>
-        <select name="sort" value={filters.sort} onChange={handleFilter} className="border rounded px-2 py-1">
-          {SORT_OPTIONS.map((s) => (<option key={s.value} value={s.value}>{s.label}</option>))}
+
+        <select
+          name="sort"
+          value={filters.sort}
+          onChange={handleFilter}
+          className="border rounded-lg px-3 py-2 shadow-sm focus:ring focus:ring-blue-300"
+        >
+          {SORT_OPTIONS.map((s) => (
+            <option key={s.value} value={s.value}>
+              {s.label}
+            </option>
+          ))}
         </select>
+
         <input
           name="search"
           type="text"
-          placeholder="Search by title"
+          placeholder="Search by title..."
           value={filters.search}
           onChange={handleFilter}
-          className="border rounded px-2 py-1"
+          className="border rounded-lg px-3 py-2 flex-1 min-w-[200px] shadow-sm focus:ring focus:ring-blue-300"
         />
-        <button className="bg-gray-400 px-3 py-1 rounded text-white" onClick={() => setFilters({status: "", category: "", search: "", sort: "latest"})}>Clear Filters</button>
+
+        <button
+          onClick={() =>
+            setFilters({ status: "", category: "", search: "", sort: "latest" })
+          }
+          className="bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition"
+        >
+          Clear
+        </button>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full border">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="px-3 py-2">Title</th>
-              <th className="px-3 py-2">Description</th>
-              <th className="px-3 py-2">Category</th>
-              <th className="px-3 py-2">Image</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Resolution</th>
-              <th className="px-3 py-2">Location</th>
-              <th className="px-3 py-2">Assigned To</th>
-              <th className="px-3 py-2">Reported By</th>
-              <th className="px-3 py-2">Actions</th>
+      {/* Table */}
+      <div className="overflow-x-auto bg-white rounded-lg shadow-lg">
+        <table className="min-w-full border border-gray-200">
+          <thead className="bg-gray-100">
+            <tr className="text-left">
+              <th className="px-4 py-2">Title</th>
+              <th className="px-4 py-2">Category</th>
+              <th className="px-4 py-2">Status</th>
+              <th className="px-4 py-2">Resolution</th>
+              <th className="px-4 py-2">Assigned To</th>
+              <th className="px-4 py-2">Actions</th>
             </tr>
           </thead>
           <tbody>
             {issues.map((issue) => (
-              <tr key={issue._id} className="border-b">
-                <td className="px-3 py-2 font-semibold">{issue.title}</td>
-                <td className="px-3 py-2 text-gray-700">{issue.description}</td>
-                <td className="px-3 py-2">{issue.category}</td>
-                <td className="px-3 py-2">
-                  {issue.imageURL && (
-                    <img
-                      src={
-                        issue.imageURL.startsWith("http")
-                          ? issue.imageURL
-                          : `http://localhost:8080/${issue.imageURL.replace(/\\/g, "/")}`
-                      }
-                      alt={issue.title}
-                      className="h-16 w-20 object-cover rounded"
-                    />
-                  )}
-                </td>
-                {/* Status */}
-                <td className="px-3 py-2">
+              <tr key={issue._id} className="border-t hover:bg-gray-50">
+                <td className="px-4 py-2 font-medium">{issue.title}</td>
+                <td className="px-4 py-2">{issue.category}</td>
+                <td className="px-4 py-2">
                   {editing === issue._id ? (
                     <select
                       value={status}
@@ -226,8 +250,8 @@ const AdminDashboard = () => {
                     </span>
                   )}
                 </td>
-                {/* Resolution */}
-                <td className="px-3 py-2 w-48">
+
+                <td className="px-4 py-2">
                   {editing === issue._id ? (
                     <textarea
                       value={resolutionNotes}
@@ -236,44 +260,30 @@ const AdminDashboard = () => {
                       rows={2}
                     />
                   ) : (
-                    <span className="text-gray-700 text-xs">{issue.resolutionNotes || "-"}</span>
+                    issue.resolutionNotes || "-"
                   )}
                 </td>
-                {/* Location (address, coordinates) */}
-                <td className="px-3 py-2 text-xs">
-                  {issue.location?.address || "-"}
-                  <br />
-                  {issue.location?.latitude && issue.location?.longitude
-                    ? `${issue.location.latitude}, ${issue.location.longitude}`
-                    : ""}
-                </td>
-                {/* Assigned To */}
-                <td className="px-3 py-2">
+
+                <td className="px-4 py-2 text-sm">
                   {editing === issue._id ? (
-                    <select value={assignedTo} onChange={e => setAssignedTo(e.target.value)} className="border rounded p-1">
+                    <select
+                      value={assignedTo}
+                      onChange={(e) => setAssignedTo(e.target.value)}
+                      className="border rounded p-1"
+                    >
                       <option value="">Unassigned</option>
-                      {staffList.map((staff) => (
-                        <option key={staff._id} value={staff._id}>
-                          {staff.name} ({staff.email})
+                      {staffList.map((s) => (
+                        <option key={s._id} value={s._id}>
+                          {s.name}
                         </option>
                       ))}
                     </select>
                   ) : (
-                    <span>
-                      {issue.assignedTo?.name
-                        ? `${issue.assignedTo.name} (${issue.assignedTo.email})`
-                        : <span className="text-gray-400">Unassigned</span>}
-                    </span>
+                    issue.assignedTo?.name || "Unassigned"
                   )}
                 </td>
-                {/* Reported by */}
-                <td className="px-3 py-2 text-xs">
-                  {issue.createdBy?.name || "-"}
-                  <br />
-                  <span className="text-gray-400">{issue.createdBy?.email}</span>
-                </td>
-                {/* Actions */}
-                <td className="px-3 py-2 space-x-2">
+
+                <td className="px-4 py-2 space-x-2">
                   {editing === issue._id ? (
                     <>
                       <button
@@ -291,20 +301,18 @@ const AdminDashboard = () => {
                     </>
                   ) : (
                     <>
-                      <div className="space-y-1">
-                        <button
+                      <button
                         onClick={() => startEdit(issue)}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded"
-                        >
+                      >
                         Edit
-                        </button>
-                        <button
+                      </button>
+                      <button
                         onClick={() => deleteIssue(issue._id)}
                         className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded"
-                        >
+                      >
                         Delete
-                        </button>
-                      </div>
+                      </button>
                     </>
                   )}
                 </td>
@@ -312,10 +320,9 @@ const AdminDashboard = () => {
             ))}
           </tbody>
         </table>
+
         {issues.length === 0 && (
-          <p className="text-center text-gray-500 py-6">
-            No issues found yet.
-          </p>
+          <p className="text-center text-gray-500 py-6">No issues found.</p>
         )}
       </div>
     </div>
