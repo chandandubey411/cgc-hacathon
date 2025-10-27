@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-<<<<<<< HEAD
-import HeroSection from "../components/HeroSection";
-=======
+// <<<<<<< HEAD
+// import HeroSection from "../components/HeroSection";
+// =======
 import SnailLoader from '../components/Loader'
->>>>>>> c38661efdf1c616bfe0e867a70d39eb82648030e
+// >>>>>>> c38661efdf1c616bfe0e867a70d39eb82648030e
 
 const UserDashboard = () => {
   const [issues, setIssues] = useState([]);
