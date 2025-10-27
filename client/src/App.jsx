@@ -14,6 +14,7 @@ import ReportIssue from "./pages/ReportIssue";
 import UserDashboard from "./pages/UserDashboard";
 import AdminDashboard from "./pages/Admindashboard";
 import RefreshHandler from "./RefreshHandler";
+import Footer from "./components/Footer";
 
 function App() {
   const [isAuthenticated, setisAuthenticated] = useState(false);
@@ -59,9 +60,7 @@ function App() {
             <Route path="/admin/dashboard" element={<PrivateRouteAdmin element={<AdminDashboard />}/>}/>
           </Routes>
         </main>
-        <footer className="bg-gray-200 text-center p-4">
-          &copy; 2025 CivicTrack System
-        </footer>
+          <Footer/>
       </div>
     </Router>
   );
