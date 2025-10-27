@@ -6,20 +6,22 @@ const STATUS_OPTIONS = ["Pending", "In Progress", "Resolved"];
 const AdminDashboard = () => {
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(null);
+  const [editing, setEditing] = useState(null); // issue _id being edited
   const [resolutionNotes, setResolutionNotes] = useState("");
   const [status, setStatus] = useState("");
-
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
-  const name = localStorage.getItem("loggedInUser");
-  const email = localStorage.getItem("userEmail");
+  const name = localStorage.getItem('loggedInUser')
+  const email = localStorage.getItem('userEmail')
 
   const handleLogout = () => {
-    localStorage.clear();
+    localStorage.removeItem("token");
+    localStorage.removeItem("loggedInUser");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("userRole");
     navigate("/login");
-    window.location.reload();
+    window.location.reload(); // Hard reload to reset auth state everywhere
   };
 
   useEffect(() => {
@@ -29,9 +31,13 @@ const AdminDashboard = () => {
   const fetchIssues = async () => {
     setLoading(true);
     const res = await fetch("http://localhost:8080/api/issues", {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
-    if (res.ok) setIssues(await res.json());
+    if (res.ok) {
+      setIssues(await res.json());
+    }
     setLoading(false);
   };
 
@@ -47,6 +53,7 @@ const AdminDashboard = () => {
     setStatus("");
   };
 
+  // PATCH request to update status/comments
   const saveChanges = async (id) => {
     const res = await fetch(`http://localhost:8080/api/issues/${id}`, {
       method: "PATCH",
@@ -54,207 +61,168 @@ const AdminDashboard = () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ status, resolutionNotes }),
+      body: JSON.stringify({
+        status,
+        resolutionNotes,
+      }),
     });
     if (res.ok) {
       fetchIssues();
       cancelEdit();
-    } else alert("Update failed");
+    } else {
+      alert("Update failed");
+    }
   };
 
+  // DELETE request to remove the issue
   const deleteIssue = async (id) => {
     if (!window.confirm("Are you sure you want to delete this issue?")) return;
     const res = await fetch(`http://localhost:8080/api/issues/${id}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
-    if (res.ok) setIssues(issues.filter((i) => i._id !== id));
-    else alert("Delete failed");
+    if (res.ok) {
+      setIssues(issues.filter((i) => i._id !== id));
+    } else {
+      alert("Delete failed");
+    }
   };
 
-  if (loading)
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <p className="text-gray-600 text-lg">Loading issues...</p>
-      </div>
-    );
+  if (loading) return <div>Loading issues...</div>;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 py-10 px-6 flex justify-center">
-      <div className="flex flex-col md:flex-row gap-8 w-full max-w-7xl">
-        {/* LEFT: Admin Profile */}
-        <div className="md:w-1/4">
-          <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center border border-gray-200">
-            <div className="w-24 h-24 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-4xl font-bold mb-4 shadow-md">
-              {name ? name[0].toUpperCase() : "A"}
-            </div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-1">
-              {name || "Admin User"}
-            </h2>
-            <p className="text-sm text-gray-500 mb-6">
-              {email || "admin@email.com"}
-            </p>
+    <div className="max-w-6xl mx-auto p-6">
+      <h2 className="text-2xl font-bold mb-6">Admin Dashboard: All Reported Issues</h2>
 
-            <button
-              onClick={handleLogout}
-              className="w-full bg-red-500 hover:bg-red-600 py-2 rounded-lg text-white font-medium shadow-md transition-all"
-            >
-              Logout
-            </button>
-          </div>
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <div className="text-2xl font-bold">Welcome, {name || "-"}</div>
+          <div className="text-gray-700 text-base">Email: {email || "-"}</div>
         </div>
+        <button
+          onClick={handleLogout}
+          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Logout
+        </button>
+      </div>
 
-        {/* RIGHT: Issue Table */}
-        <div className="flex-1 bg-white rounded-2xl shadow-xl border border-gray-200 p-6 overflow-x-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">
-              🧾 Reported Issues
-            </h2>
-            <span className="text-sm text-gray-500">
-              Total: {issues.length}
-            </span>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm border-separate border-spacing-y-2">
-              <thead>
-                <tr className="bg-blue-100 text-blue-800 uppercase text-xs tracking-wider rounded-md">
-                  <th className="px-4 py-3 text-left rounded-l-lg">Title</th>
-                  <th className="px-4 py-3 text-left">Description</th>
-                  <th className="px-4 py-3 text-left">Category</th>
-                  <th className="px-4 py-3 text-left">Image</th>
-                  <th className="px-4 py-3 text-left">Status</th>
-                  <th className="px-4 py-3 text-left">Resolution</th>
-                  <th className="px-4 py-3 text-left">Reporter</th>
-                  <th className="px-4 py-3 text-center rounded-r-lg">Actions</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {issues.map((issue) => (
-                  <tr
-                    key={issue._id}
-                    className="bg-gray-50 hover:bg-gray-100 transition-all shadow-sm rounded-lg"
-                  >
-                    <td className="px-4 py-3 font-medium text-gray-800">
-                      {issue.title}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">
-                      {issue.description}
-                    </td>
-                    <td className="px-4 py-3 text-gray-700">
-                      {issue.category}
-                    </td>
-                    <td className="px-4 py-3">
-                      {issue.imageURL && (
-                        <img
-                          src={
-                            issue.imageURL.startsWith("http")
-                              ? issue.imageURL
-                              : `http://localhost:8080/${issue.imageURL.replace(
-                                  /\\/g,
-                                  "/"
-                                )}`
-                          }
-                          alt={issue.title}
-                          className="h-16 w-24 object-cover rounded-lg border border-gray-200 shadow-sm"
-                        />
-                      )}
-                    </td>
-
-                    <td className="px-4 py-3">
-                      {editing === issue._id ? (
-                        <select
-                          value={status}
-                          onChange={(e) => setStatus(e.target.value)}
-                          className="border rounded-lg px-2 py-1 bg-white text-gray-800 shadow-sm"
-                        >
-                          {STATUS_OPTIONS.map((s) => (
-                            <option key={s}>{s}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <span
-                          className={`font-semibold px-3 py-1 rounded-full text-xs ${
-                            issue.status === "Resolved"
-                              ? "bg-green-100 text-green-700"
-                              : issue.status === "In Progress"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
-                        >
-                          {issue.status}
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="px-4 py-3 w-56">
-                      {editing === issue._id ? (
-                        <textarea
-                          value={resolutionNotes}
-                          onChange={(e) => setResolutionNotes(e.target.value)}
-                          className="border rounded-lg w-full p-2 text-sm bg-gray-50 shadow-sm focus:ring-2 focus:ring-blue-200"
-                          rows={2}
-                        />
-                      ) : (
-                        <span className="text-gray-700 text-xs italic">
-                          {issue.resolutionNotes || "No notes added"}
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="px-4 py-3 text-xs text-gray-700">
-                      <div className="font-medium">{issue.createdBy?.name}</div>
-                      <div className="text-gray-400">
-                        {issue.createdBy?.email}
+      <div className="overflow-x-auto">
+        <table className="min-w-full border">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="px-3 py-2">Title</th>
+              <th className="px-3 py-2">Description</th>
+              <th className="px-3 py-2">Category</th>
+              <th className="px-3 py-2">Image</th>
+              <th className="px-3 py-2">Status</th>
+              <th className="px-3 py-2">Resolution</th>
+              <th className="px-3 py-2">Reported By</th>
+              <th className="px-3 py-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {issues.map((issue) => (
+              <tr key={issue._id} className="border-b">
+                <td className="px-3 py-2 font-semibold">{issue.title}</td>
+                <td className="px-3 py-2 text-gray-700">{issue.description}</td>
+                <td className="px-3 py-2">{issue.category}</td>
+                <td className="px-3 py-2">
+                  {issue.imageURL && (
+                    <img
+                      src={
+                        issue.imageURL.startsWith("http")
+                          ? issue.imageURL
+                          : `http://localhost:8080/${issue.imageURL.replace(/\\/g, "/")}`
+                      }
+                      alt={issue.title}
+                      className="h-16 w-20 object-cover rounded"
+                    />
+                  )}
+                </td>
+                <td className="px-3 py-2">
+                  {editing === issue._id ? (
+                    <select
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value)}
+                      className="border rounded p-1"
+                    >
+                      {STATUS_OPTIONS.map((s) => (
+                        <option key={s}>{s}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span
+                      className={
+                        issue.status === "Resolved"
+                          ? "text-green-600 font-semibold"
+                          : issue.status === "In Progress"
+                          ? "text-yellow-600 font-semibold"
+                          : "text-red-600 font-semibold"
+                      }
+                    >
+                      {issue.status}
+                    </span>
+                  )}
+                </td>
+                <td className="px-3 py-2 w-48">
+                  {editing === issue._id ? (
+                    <textarea
+                      value={resolutionNotes}
+                      onChange={(e) => setResolutionNotes(e.target.value)}
+                      className="border rounded w-full p-1 text-sm"
+                      rows={2}
+                    />
+                  ) : (
+                    <span className="text-gray-700 text-xs">{issue.resolutionNotes || "-"}</span>
+                  )}
+                </td>
+                <td className="px-3 py-2 text-xs">
+                  {issue.createdBy?.name || "-"}
+                  <br />
+                  <span className="text-gray-400">{issue.createdBy?.email}</span>
+                </td>
+                <td className="px-3 py-2 space-x-2">
+                  {editing === issue._id ? (
+                    <>
+                      <button
+                        onClick={() => saveChanges(issue._id)}
+                        className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={cancelEdit}
+                        className="bg-gray-400 hover:bg-gray-600 text-white px-2 py-1 rounded"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="space-y-1">
+                        <button
+                        onClick={() => startEdit(issue)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => deleteIssue(issue._id)}
+                        className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded"
+                      >
+                        Delete
+                      </button>
                       </div>
-                    </td>
-
-                    <td className="px-4 py-3">
-                      {editing === issue._id ? (
-                        <div className="flex gap-2 justify-center">
-                          <button
-                            onClick={() => saveChanges(issue._id)}
-                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition"
-                          >
-                            💾 Save
-                          </button>
-                          <button
-                            onClick={cancelEdit}
-                            className="bg-gray-400 hover:bg-gray-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition"
-                          >
-                            ✖ Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex gap-2 justify-center">
-                          <button
-                            onClick={() => startEdit(issue)}
-                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition"
-                          >
-                            ✏️ Edit
-                          </button>
-                          <button
-                            onClick={() => deleteIssue(issue._id)}
-                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition"
-                          >
-                            🗑 Delete
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {issues.length === 0 && (
-              <p className="text-center text-gray-500 py-6">
-                No issues found yet.
-              </p>
-            )}
-          </div>
-        </div>
+                    </>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
