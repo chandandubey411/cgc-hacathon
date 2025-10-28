@@ -1,8 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const STATUS_OPTIONS = ["Pending", "In Progress", "Resolved"];
-const CATEGORIES = ["Garbage", "Water Leak", "Road Safety", "Pothole", "Streetlight", "Other"];
+const CATEGORIES = [
+  "Garbage",
+  "Water Leak",
+  "Road Safety",
+  "Pothole",
+  "Streetlight",
+  "Other",
+];
 const SORT_OPTIONS = [
   { label: "Latest first", value: "latest" },
   { label: "Oldest first", value: "oldest" },
@@ -29,25 +38,25 @@ const AdminDashboard = () => {
   const name = localStorage.getItem("loggedInUser");
   const email = localStorage.getItem("userEmail");
 
-  // ✅ Fetch Issues + Staff
+  // ✅ Fetch data
   useEffect(() => {
     fetchData();
     fetchStaff();
-    // eslint-disable-next-line
   }, []);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:8080/api/issues", {
+      const res = await fetch("http://localhost:8080/api/admin/issues", {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (!res.ok) throw new Error("Failed to fetch issues");
       const data = await res.json();
       setAllIssues(data);
       setIssues(data);
-      setLoading(false);
     } catch (err) {
-      console.error("Error fetching issues:", err);
+      toast.error("❌ Failed to load issues!");
+    } finally {
       setLoading(false);
     }
   };
@@ -57,6 +66,7 @@ const AdminDashboard = () => {
       const res = await fetch("http://localhost:8080/api/staff", {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (!res.ok) throw new Error("Failed to fetch staff");
       const data = await res.json();
       setStaffList(data);
     } catch (err) {
@@ -64,20 +74,13 @@ const AdminDashboard = () => {
     }
   };
 
-  // ✅ Apply frontend filters
+  // ✅ Apply filters
   useEffect(() => {
-    applyFrontendFilters();
-  }, [filters, allIssues]);
-
-  const applyFrontendFilters = () => {
     let filtered = [...allIssues];
-
     if (filters.status)
       filtered = filtered.filter((i) => i.status === filters.status);
-
     if (filters.category)
       filtered = filtered.filter((i) => i.category === filters.category);
-
     if (filters.search)
       filtered = filtered.filter((i) =>
         i.title.toLowerCase().includes(filters.search.toLowerCase())
@@ -88,9 +91,8 @@ const AdminDashboard = () => {
         ? new Date(b.createdAt) - new Date(a.createdAt)
         : new Date(a.createdAt) - new Date(b.createdAt)
     );
-
     setIssues(filtered);
-  };
+  }, [filters, allIssues]);
 
   const handleFilter = (e) => {
     const { name, value } = e.target;
@@ -100,10 +102,9 @@ const AdminDashboard = () => {
   const handleLogout = () => {
     localStorage.clear();
     navigate("/login");
-    window.location.reload();
+    toast.info("Logged out!");
   };
 
-  // ✅ Edit logic
   const startEdit = (issue) => {
     setEditing(issue._id);
     setResolutionNotes(issue.resolutionNotes || "");
@@ -118,8 +119,9 @@ const AdminDashboard = () => {
     setAssignedTo("");
   };
 
-  // ✅ Save changes to backend
+  // ✅ FIXED Save (Resolved issue now updates properly)
   const saveChanges = async (id) => {
+    if (!status) return toast.warn("Please select a status!");
     try {
       const res = await fetch(`http://localhost:8080/api/admin/issues/${id}`, {
         method: "PATCH",
@@ -135,36 +137,31 @@ const AdminDashboard = () => {
       });
 
       if (!res.ok) throw new Error("Failed to update issue");
+      const updated = await res.json();
 
-      const updatedIssue = await res.json();
       setAllIssues((prev) =>
-        prev.map((i) => (i._id === id ? updatedIssue : i))
+        prev.map((i) => (i._id === id ? updated : i))
       );
       cancelEdit();
-      alert("✅ Issue updated successfully!");
+      toast.success("✅ Issue updated successfully!");
     } catch (err) {
-      console.error("Update error:", err);
-      alert("❌ Update failed! Check console for details.");
+      toast.error("❌ Update failed!");
     }
   };
 
-  // ✅ Delete issue
+  // ✅ Delete Issue
   const deleteIssue = async (id) => {
     if (!window.confirm("Are you sure you want to delete this issue?")) return;
-
     try {
       const res = await fetch(`http://localhost:8080/api/admin/issues/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (!res.ok) throw new Error("Delete failed");
-
+      if (!res.ok) throw new Error("Failed to delete");
       setAllIssues((prev) => prev.filter((i) => i._id !== id));
-      alert("🗑️ Issue deleted successfully!");
+      toast.info("🗑️ Issue deleted successfully!");
     } catch (err) {
-      console.error("Delete error:", err);
-      alert("❌ Delete failed! Check console for details.");
+      toast.error("❌ Delete failed!");
     }
   };
 
@@ -177,6 +174,9 @@ const AdminDashboard = () => {
 
   return (
     <div className="max-w-6xl mx-auto p-6 mt-10">
+      <ToastContainer position="top-right" autoClose={2500} theme="colored" />
+
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
