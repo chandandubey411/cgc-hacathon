@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { FaRoad, FaTrash, FaLeaf, FaPlug } from "react-icons/fa";
+import AOS from "aos"
+import "aos/dist/aos.css";
 
 const categories = [
   {
@@ -41,6 +43,13 @@ const categories = [
 ];
 
 const ReportCategories = () => {
+
+    useEffect(()=>{
+        AOS.init({
+          duration:1500,
+          once:true,
+        })
+      },[])
   return (
     <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
       <div className="text-center mb-14 px-6">
@@ -58,6 +67,7 @@ const ReportCategories = () => {
           <div
             key={index}
             className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+            data-aos="zoom-in"
           >
             <div className="relative">
               <img

@@ -1,5 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Camera, MapPin, Send, CheckCircle } from "lucide-react";
+import AOS from "aos"
+import "aos/dist/aos.css";
+
 
 const steps = [
   {
@@ -36,7 +39,16 @@ const steps = [
   },
 ];
 
+
 const HowItWorks = () => {
+
+  useEffect(()=>{
+    AOS.init({
+      duration:1500,
+      once:true,
+    })
+  },[])
+
   return (
     <section className="py-20 bg-gradient-to-b from-white to-gray-50">
       <div className="text-center mb-12">
@@ -52,6 +64,8 @@ const HowItWorks = () => {
           <div
             key={step.id}
             className="relative bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 p-8 flex-1 text-center"
+            data-aos="fade-up-left"
+            // data-aos-delay={index*200}
           >
         
             <div
