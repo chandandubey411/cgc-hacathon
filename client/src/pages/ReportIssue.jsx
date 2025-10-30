@@ -134,7 +134,7 @@ const ReportIssue = () => {
     for (let key in form) data.append(key, form[key]);
 
     try {
-      const res = await fetch("http://localhost:8080/api/issues/", {
+      const res = await fetch("https://cgc-hacathon-backend.onrender.com/api/issues/", {
         method: "POST",
         body: data,
         headers: { Authorization: `Bearer ${token}` },
