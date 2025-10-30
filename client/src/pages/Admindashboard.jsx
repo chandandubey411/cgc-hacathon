@@ -51,7 +51,7 @@ const AdminDashboard = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:8080/api/issues", {
+      const res = await fetch("https://cgc-hacathon-backend.onrender.com/api/issues", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -122,7 +122,7 @@ const AdminDashboard = () => {
   // ✅ Save changes to backend (Fixed: assignedTo persist properly)
   const saveChanges = async (id) => {
     try {
-      const res = await fetch(`http://localhost:8080/api/admin/issues/${id}`, {
+      const res = await fetch(`https://cgc-hacathon-backend.onrender.com/api/admin/issues/${id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -166,7 +166,7 @@ const AdminDashboard = () => {
     if (!window.confirm("Are you sure you want to delete this issue?")) return;
 
     try {
-      const res = await fetch(`http://localhost:8080/api/admin/issues/${id}`, {
+      const res = await fetch(`https://cgc-hacathon-backend.onrender.com/api/admin/issues/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
