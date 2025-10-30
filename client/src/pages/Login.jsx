@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ToastContainer } from "react-toastify";
-import { handleError, handleSuccess } from "../utils";
+import { handleError, handleSuccess } from "../Utils";
 import { Link, useNavigate } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
 
