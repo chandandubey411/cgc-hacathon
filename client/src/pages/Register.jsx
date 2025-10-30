@@ -38,7 +38,7 @@ const Register = () => {
     const errs = validate();
     setErrors(errs);
     if (Object.keys(errs).length === 0) {
-      const url = "http://localhost:8080/api/auth/register";
+      const url = "https://cgc-hacathon-backend.onrender.com/api/auth/register";
       const response = await fetch(url, {
         method: "POST",
         headers: {
