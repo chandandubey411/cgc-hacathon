@@ -8,7 +8,7 @@ const fs = require("fs");
 
 const authRoutes = require("./App/Routes/auth.js");
 const issueRoutes = require("./App/Routes/Issue.js");
-const adminRoutes = require("./App/Routes/Admin.js");
+const adminRoutes = require("./App/Routes/admin.js");
 
 connectDB();
 
